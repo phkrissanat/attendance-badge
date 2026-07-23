@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>บัตรพนักงานดิจิทัล</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#f1f3f8;
+    --panel-2:#e6e9f1;
+    --accent:#0d9488;
+    --accent-dim:#ccf3ec;
+    --text:#161a23;
+    --text-dim:#6b7280;
+    --red:#dc2626;
+    --red-bg:#fde2e2;
+    --amber:#b45309;
+    --amber-bg:#fdecd2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; margin:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+    height:100dvh; overflow-y:auto; display:flex; flex-direction:column;
+  }
+
+  header{
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; background:var(--bg); z-index:6;
+  }
+  header h1{font-size:15px; font-weight:600; margin:0; color:var(--text-dim); letter-spacing:.3px;}
+  .header-btns{display:flex; gap:8px;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:11px;border:none;background:var(--panel-2);
+    color:var(--text); display:flex;align-items:center;justify-content:center; font-size:17px;
+  }
+
+  main{flex:1; display:flex; flex-direction:column; align-items:center; padding:10px 20px 30px 20px; min-height:0;}
+
+  .card{
+    background:#ffffff; border-radius:22px; padding:22px 22px 18px 22px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    width:min(84vw, 340px);
+    box-shadow:0 2px 18px rgba(22,26,35,.10);
+    border:1px solid #ececf2;
+    flex-shrink:0;
+  }
+  .card .qr-box{
+    width:min(64vw, 260px); height:min(64vw, 260px);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card .qr-box img, .card .qr-box canvas{width:100%; height:100%;}
+  .name{color:#161a23; font-size:17px; font-weight:700; margin-top:2px;}
+  .empid{color:#5b6272; font-size:13px; letter-spacing:1px;}
+
+  .brightness-tip{
+    display:flex; align-items:center; gap:8px; margin-top:18px;
+    font-size:12.5px; color:var(--text-dim); text-align:center; max-width:300px;
+  }
+  .tap-hint{
+    margin-top:10px; font-size:12px; color:var(--accent); display:flex; align-items:center; gap:6px;
+    text-align:center;
+  }
+
+  .badge-switcher{display:flex; gap:8px; margin-top:20px; flex-wrap:wrap; justify-content:center;}
+  .badge-chip{
+    background:var(--panel-2); border:1px solid transparent; padding:7px 14px; border-radius:999px;
+    font-size:12.5px; color:var(--text-dim);
+  }
+  .badge-chip.active{border-color:var(--accent); color:var(--accent);}
+
+  /* today panel */
+  .today-panel{width:100%; max-width:360px; margin-top:22px;}
+  .leave-card{
+    background:var(--amber-bg); border-radius:14px; padding:12px 14px; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--amber);
+  }
+  .leave-card .lt{font-weight:700;}
+  .leave-card button{background:none; border:none; color:var(--amber); font-size:13px; text-decoration:underline;}
+  .leave-add-btn{
+    width:100%; padding:10px; border-radius:12px; border:1px dashed #c9cede; background:none;
+    color:var(--text-dim); font-size:13px; margin-bottom:14px;
+  }
+
+  .col-head{font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin:14px 0 8px 0;}
+  .col-head:first-child{margin-top:0;}
+  .time-row{
+    display:flex; align-items:center; gap:10px; background:var(--panel); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px; font-size:14px;
+  }
+  .time-row .dot{width:9px;height:9px;border-radius:50%; flex-shrink:0;}
+  .time-row.in .dot{background:var(--accent);}
+  .time-row.out .dot{background:var(--amber);}
+  .time-row .t{font-weight:700; flex-shrink:0;}
+  .late-badge{
+    background:var(--red-bg); color:var(--red); font-size:11px; font-weight:700;
+    padding:3px 9px; border-radius:999px; white-space:nowrap;
+  }
+  .time-row .spacer{flex:1;}
+  .del-btn{background:none; border:none; color:var(--text-dim); font-size:15px; padding:2px 4px; flex-shrink:0;}
+  .empty-log{color:var(--text-dim); font-size:12.5px; text-align:center; padding:14px 0;}
+
+  .tap-flash{
+    position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:15;
+    transition:opacity .12s ease;
+  }
+  .tap-flash.show{opacity:.28;}
+
+  .confirm-toast{
+    position:fixed; top:calc(16px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%) translateY(-160%);
+    background:var(--panel-2); border:1px solid var(--accent); color:var(--text);
+    padding:12px 22px; border-radius:14px; font-size:14px; z-index:35; display:flex; align-items:center; gap:8px;
+    transition:transform .28s ease; white-space:nowrap; max-width:88vw;
+  }
+  .confirm-toast.show{transform:translateX(-50%) translateY(0);}
+  .confirm-toast .t-type{font-weight:700; color:var(--accent);}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:20; display:flex; align-items:flex-end;}
+  .modal{background:var(--panel); width:100%; border-radius:20px 20px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom)) 18px; max-height:85vh; overflow-y:auto;}
+  .modal h2{font-size:16px; margin:0 0 14px 0;}
+  .modal h3{font-size:12.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.4px; margin:18px 0 8px 0; font-weight:600;}
+  .modal h3:first-of-type{margin-top:0;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px;}
+  .field input, .field select{
+    width:100%; padding:11px 12px; border-radius:10px; border:1px solid #d7dbe5;
+    background:var(--panel-2); color:var(--text); font-size:14px;
+  }
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  .saved-list{margin:6px 0 14px 0;}
+  .saved-item{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--panel-2); border-radius:10px; margin-bottom:8px;}
+  .saved-item .info .n{font-size:14px; font-weight:600;}
+  .saved-item .info .i{font-size:12px; color:var(--text-dim);}
+  .saved-item .btns{display:flex; gap:6px;}
+  .mini-btn{background:none; border:none; color:var(--text-dim); font-size:15px; padding:4px 6px;}
+  .mini-btn.danger{color:var(--red);}
+  .modal-actions{display:flex; gap:10px; margin-top:6px;}
+  .btn{flex:1; padding:12px; border-radius:10px; border:none; font-size:14px; font-weight:600;}
+  .btn.primary{background:var(--accent); color:#ffffff;}
+  .btn.ghost{background:var(--panel-2); color:var(--text);}
+
+  /* work schedule modal */
+  .daycheck-grid{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+  .daycheck{
+    flex:1; min-width:38px; text-align:center; padding:9px 0; border-radius:9px; font-size:12px;
+    background:var(--panel-2); color:var(--text-dim); border:1px solid transparent; cursor:pointer;
+  }
+  .daycheck.on{background:var(--accent-dim); color:var(--accent); border-color:var(--accent);}
+  .upload-row{
+    display:flex; align-items:center; gap:10px; background:var(--panel-2); border-radius:12px;
+    padding:12px; margin-bottom:12px;
+  }
+  .upload-row .txt{flex:1; font-size:12.5px; color:var(--text-dim);}
+  .file-btn{
+    background:var(--accent); color:#fff; border:none; border-radius:9px; padding:9px 14px; font-size:13px; font-weight:600;
+    position:relative; overflow:hidden; white-space:nowrap;
+  }
+  .file-btn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+  .override-item{
+    display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
+    background:var(--panel-2); border-radius:10px; margin-bottom:7px; font-size:12.5px;
+  }
+  .override-item .od{font-weight:600; margin-right:8px;}
+  .override-item .ok{padding:2px 8px; border-radius:999px; font-size:10.5px; font-weight:700; margin-right:6px;}
+  .ok.holiday{background:var(--red-bg); color:var(--red);}
+  .ok.workday{background:var(--accent-dim); color:var(--accent);}
+  .ok.leave{background:var(--amber-bg); color:var(--amber);}
+  .type-chips{display:flex; gap:8px; margin-bottom:14px;}
+  .type-chip-btn{
+    flex:1; padding:10px 6px; border-radius:10px; border:1px solid #d7dbe5; background:var(--panel-2);
+    color:var(--text-dim); font-size:12.5px; text-align:center;
+  }
+  .type-chip-btn.sel.vacation{border-color:#0d9488; color:#0d9488; background:var(--accent-dim);}
+  .type-chip-btn.sel.personal{border-color:#7c5cbf; color:#7c5cbf; background:#ece5fa;}
+  .type-chip-btn.sel.sick{border-color:#dc2626; color:#dc2626; background:var(--red-bg);}
+
+  /* monthly summary */
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .month-nav button{background:var(--panel-2); border:none; color:var(--text); width:34px;height:34px;border-radius:9px; font-size:15px;}
+  .month-nav .m-label{font-size:14.5px; font-weight:600;}
+  .summary-cards{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
+  .summary-cards .s-card{flex:1 1 45%; background:var(--panel-2); border-radius:12px; padding:10px; text-align:center;}
+  .summary-cards .s-card .n{font-size:19px; font-weight:700;}
+  .summary-cards .s-card .l{font-size:10.5px; color:var(--text-dim); margin-top:2px;}
+  .day-block{background:var(--panel-2); border-radius:14px; padding:12px 14px; margin-bottom:10px;}
+  .day-block .dd{font-size:12.5px; font-weight:700; margin-bottom:8px;}
+  .day-block .drow{display:flex; align-items:center; gap:8px; font-size:12.5px; padding:4px 0;}
+  .day-block .drow .dot{width:7px;height:7px;border-radius:50%; flex-shrink:0;}
+  .day-block .drow.in .dot{background:var(--accent);}
+  .day-block .drow.out .dot{background:var(--amber);}
+  .day-block .drow .lbl{color:var(--text-dim); width:66px; flex-shrink:0;}
+  .day-block .holiday-line{color:var(--red); font-size:12.5px;}
+  .day-block .leave-line{color:var(--amber); font-size:12.5px;}
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+    background:#161a23; border:1px solid #333850; padding:10px 16px; border-radius:12px;
+    font-size:13px; z-index:40; opacity:0; transition:opacity .25s; color:#fff; max-width:88vw; text-align:center;
+  }
+  .toast.show{opacity:1;}
+
+  .install-banner{
+    position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom));
+    background:var(--panel-2); border:1px solid #d7dbe5; border-radius:14px; padding:12px 14px;
+    display:none; align-items:center; gap:10px; z-index:25;
+  }
+  .install-banner.show{display:flex;}
+  .install-banner .txt{flex:1; font-size:13px; color:var(--text-dim);}
+</style>
+</head>
+<body>
+
+  <div class="tap-flash" id="tapFlash"></div>
+  <div class="confirm-toast" id="confirmToast">
+    <span>✅</span>
+    <span>บันทึก <span class="t-type" id="confirmType">เข้างาน</span> เวลา <span id="confirmTime">-</span></span>
+  </div>
+
+  <header>
+    <h1>บัตรพนักงานดิจิทัล</h1>
+    <div class="header-btns">
+      <button class="icon-btn" id="historyBtn" aria-label="ประวัติรายเดือน">📅</button>
+      <button class="icon-btn" id="scheduleBtn" aria-label="ตั้งค่าตารางงาน">⏰</button>
+      <button class="icon-btn" id="bonusBtn" aria-label="แดชบอร์ดโบนัส">💰</button>
+      <button class="icon-btn" id="settingsBtn" aria-label="ตั้งค่าบัตร">⚙️</button>
+    </div>
+  </header>
+
+  <main id="mainArea">
+    <div class="card">
+      <div class="qr-box" id="qrBox"></div>
+      <div class="name" id="badgeName">-</div>
+      <div class="empid" id="badgeId">-</div>
+    </div>
+
+    <div class="badge-switcher" id="badgeSwitcher"></div>
+
+    <div class="brightness-tip">
+      ☀️ หน้าจอตั้งค่าความสว่างสูงสุดไว้ให้อัตโนมัติแล้ว พร้อมสแกนได้ทันที (อย่าลืมเปิดความสว่างของตัวเครื่องไว้สูงสุดด้วยนะครับ เว็บปรับให้ไม่ได้)
+    </div>
+    <div class="tap-hint">👆 แตะที่ไหนก็ได้บนหน้าจอ เพื่อบันทึกเวลาหลังยื่นสแกนแล้ว</div>
+
+    <div class="today-panel">
+      <div id="leaveArea"></div>
+
+      <div class="col-head">เวลาเข้างาน</div>
+      <div id="inList"></div>
+
+      <div class="col-head">เวลาเลิกงาน</div>
+      <div id="outList"></div>
+    </div>
+  </main>
+
+  <div class="install-banner" id="installBanner">
+    <div class="txt">ติดตั้งบัตรนี้ลงหน้าจอโฮมเพื่อเปิดใช้ได้เร็วขึ้น</div>
+    <button class="btn primary" id="installBtn" style="flex:none;padding:9px 14px;">ติดตั้ง</button>
+  </div>
+
+  <!-- badge settings modal -->
+  <div class="modal-bg" id="modalBg" style="display:none;">
+    <div class="modal">
+      <h2>บัตรของฉัน</h2>
+      <div class="saved-list" id="savedList"></div>
+
+      <h2 style="margin-top:4px;">เพิ่ม / แก้ไขบัตร</h2>
+      <div class="field">
+        <label>ชื่อพนักงาน (แสดงบนบัตร)</label>
+        <input type="text" id="nameInput" placeholder="เช่น สมชาย ใจดี">
+      </div>
+      <div class="field">
+        <label>รหัสพนักงาน / ข้อมูลใน QR</label>
+        <input type="text" id="idInput" placeholder="เช่น 00000189">
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="closeSettings">ปิด</button>
+        <button class="btn primary" id="saveBadge">บันทึกบัตรนี้</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- work schedule modal -->
+  <div class="modal-bg" id="scheduleModalBg" style="display:none;">
+    <div class="modal">
+      <h2>ตั้งค่าตารางงาน</h2>
+
+      <h3>เวลาทำงานปกติ</h3>
+      <div class="field-row">
+        <div class="field"><label>ช่วงเช้าเริ่ม</label><input type="time" id="fMorningStart" value="08:00"></div>
+        <div class="field"><label>พักเที่ยง</label><input type="time" id="fLunchStart" value="12:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ช่วงบ่ายเริ่ม</label><input type="time" id="fAfternoonStart" value="13:00"></div>
+        <div class="field"><label>เลิกงาน</label><input type="time" id="fAfternoonEnd" value="17:00"></div>
+      </div>
+
+      <h3>วันทำงานปกติ</h3>
+      <div class="daycheck-grid" id="dayCheckGrid"></div>
+
+      <h3>ปฏิทินวันหยุด / วันทำงานพิเศษ</h3>
+      <div class="upload-row">
+        <div class="txt">นำเข้าไฟล์ CSV (คอลัมน์: date,type,label) เพื่อกำหนดวันหยุดตามกฎหมายหรือวันทำงานพิเศษล่วงหน้า</div>
+        <div class="file-btn">เลือกไฟล์<input type="file" id="csvFileInput" accept=".csv,text/csv"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>วันที่</label><input type="date" id="ovDate"></div>
+        <div class="field">
+          <label>ประเภท</label>
+          <select id="ovType">
+            <option value="holiday">วันหยุด (เช่น วันหยุดนักขัตฤกษ์)</option>
+            <option value="workday">วันทำงานพิเศษ (ชดเชย)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>รายละเอียด (ไม่บังคับ)</label>
+        <input type="text" id="ovLabel" placeholder="เช่น วันแม่แห่งชาติ">
+      </div>
+      <button class="btn ghost" id="addOverrideBtn" style="width:100%; margin-bottom:14px;">+ เพิ่มรายการ</button>
+
+      <h3>รายการที่กำหนดไว้</h3>
+      <div id="overrideList"></div>
+
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn ghost" id="closeSchedule">ปิด</button>
+        <button class="btn primary" id="saveSchedule">บันทึกตารางงาน</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- leave entry modal -->
+  <div class="modal-bg" id="leaveModalBg" style="display:none;">
+    <div class="modal">
+      <h2>บันทึกการลา — <span id="leaveDateLabel">วันนี้</span></h2>
+      <div class="type-chips" id="leaveTypeChips">
+        <button class="type-chip-btn vacation" data-type="vacation">🏖️ ลาพักร้อน</button>
+        <button class="type-chip-btn personal" data-type="personal">📋 ลากิจ</button>
+        <button class="type-chip-btn sick" data-type="sick">🤒 ลาป่วย</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ชั่วโมง</label><input type="number" id="leaveHours" min="0" max="24" value="8"></div>
+        <div class="field"><label>นาที</label><input type="number" id="leaveMinutes" min="0" max="59" value="0"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="removeLeaveBtn">ลบการลา</button>
+        <button class="btn primary" id="saveLeaveBtn">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- monthly history modal -->
+  <div class="modal-bg" id="historyModalBg" style="display:none;">
+    <div class="modal">
+      <div class="month-nav">
+        <button id="prevMonthBtn">‹</button>
+        <div class="m-label" id="monthLabel">-</div>
+        <button id="nextMonthBtn">›</button>
+      </div>
+      <div class="summary-cards">
+        <div class="s-card"><div class="n" id="sumDays">0</div><div class="l">วันที่มาทำงาน</div></div>
+        <div class="s-card"><div class="n" id="sumHours">0</div><div class="l">ชั่วโมงทำงานรวม</div></div>
+        <div class="s-card"><div class="n" id="sumLeave">0</div><div class="l">ชั่วโมงลารวม</div></div>
+        <div class="s-card"><div class="n" id="sumLate">0</div><div class="l">จำนวนวันมาสาย</div></div>
+      </div>
+      <div id="monthDayList"></div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn ghost" id="exportMonthBtn">ส่งออก CSV</button>
+        <button class="btn primary" id="closeHistory">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- bonus dashboard modal -->
+  <div class="modal-bg" id="bonusModalBg" style="display:none;">
+    <div class="modal">
+      <h2>โควตาวันลา & เงินเดือน</h2>
+      <div class="field-row">
+        <div class="field"><label>วันลาพักร้อน/ปี (วัน)</label><input type="number" id="qVacation" min="0" value="6"></div>
+        <div class="field"><label>วันลากิจ/ปี (วัน)</label><input type="number" id="qPersonal" min="0" value="3"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>วันลาป่วย/ปี (วัน)</label><input type="number" id="qSick" min="0" value="30"></div>
+        <div class="field"><label>เงินเดือน (บาท)</label><input type="number" id="qMonthlySalary" min="0" value="0"></div>
+      </div>
+      <div class="field" style="margin-top:-6px;">
+        <div id="dailyWagePreview" style="font-size:12.5px; color:var(--text-dim);">= ค่าแรงต่อวัน 0 บาท (เงินเดือน ÷ 30)</div>
+      </div>
+      <div class="modal-actions" style="margin-bottom:18px;">
+        <button class="btn primary" id="saveLeaveSettings" style="flex:none; padding:10px 20px;">บันทึกโควตา</button>
+      </div>
+
+      <h3 style="margin-top:0;">แดชบอร์ดประจำปี</h3>
+      <div class="month-nav">
+        <button id="prevYearBtn">‹</button>
+        <div class="m-label" id="yearLabel">-</div>
+        <button id="nextYearBtn">›</button>
+      </div>
+
+      <div class="summary-cards">
+        <div class="s-card"><div class="n" id="usedVacation">0</div><div class="l">ลาพักร้อน (ใช้ไป/โควตา)</div></div>
+        <div class="s-card"><div class="n" id="usedPersonal">0</div><div class="l">ลากิจ (ใช้ไป/โควตา)</div></div>
+        <div class="s-card"><div class="n" id="usedSick">0</div><div class="l">ลาป่วย (ใช้ไป/โควตา)</div></div>
+        <div class="s-card"><div class="n" id="usedCombined">0</div><div class="l">กิจ+ป่วย รวม (วัน)</div></div>
+      </div>
+
+      <div class="leave-card" id="bonusResultCard" style="align-items:flex-start; flex-direction:column; gap:6px;">
+        <span class="lt" id="bonusTierText">-</span>
+        <span id="bonusAmountText" style="font-size:20px; font-weight:700;">-</span>
+      </div>
+
+      <div style="margin-top:14px; font-size:12px; color:var(--text-dim); line-height:1.7;">
+        เงื่อนไขโบนัส (คำนวณจากวันลากิจ + ลาป่วย รวมกันในปีนั้น):<br>
+        ≤ 5 วัน → ค่าแรงต่อวัน (เงินเดือน÷30) × 35 &nbsp;|&nbsp; ≤ 8 วัน → × 30 &nbsp;|&nbsp; ≤ 10 วัน → × 25 &nbsp;|&nbsp; มากกว่า 10 วัน → × 10
+      </div>
+
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn primary" id="closeBonus">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+  (function(){
+    "use strict";
+
+    const LS_BADGES = 'digital_badges_v1';
+    const LS_ACTIVE = 'digital_badge_active_v1';
+    const LS_LOG = 'attendance_self_log_v1';
+    const LS_SCHEDULE = 'work_schedule_v1';
+    const LS_OVERRIDES = 'calendar_overrides_v1';
+
+    const DOW_LABELS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+    const LEAVE_LABELS = { vacation:'ลาพักร้อน', personal:'ลากิจ', sick:'ลาป่วย' };
+
+    const toastEl = document.getElementById('toast');
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(()=>toastEl.classList.remove('show'), 2400);
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // ===================== badges =====================
+    function loadBadges(){
+      let badges = JSON.parse(localStorage.getItem(LS_BADGES) || 'null');
+      if(!badges || !badges.length){
+        badges = [{ id:'00000189', name:'พนักงาน' }];
+        localStorage.setItem(LS_BADGES, JSON.stringify(badges));
+      }
+      return badges;
+    }
+    function saveBadges(list){ localStorage.setItem(LS_BADGES, JSON.stringify(list)); }
+    function getActiveIndex(){ return parseInt(localStorage.getItem(LS_ACTIVE) || '0', 10); }
+    function setActiveIndex(i){ localStorage.setItem(LS_ACTIVE, String(i)); }
+
+    let badges = loadBadges();
+    let activeIndex = Math.min(getActiveIndex(), badges.length-1);
+
+    const qrBox = document.getElementById('qrBox');
+    const badgeName = document.getElementById('badgeName');
+    const badgeId = document.getElementById('badgeId');
+    const badgeSwitcher = document.getElementById('badgeSwitcher');
+
+    function renderQR(){
+      const b = badges[activeIndex];
+      qrBox.innerHTML = '';
+      new QRCode(qrBox, {
+        text: b.id, width: 260, height: 260,
+        colorDark: '#161a23', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      badgeName.textContent = b.name || 'พนักงาน';
+      badgeId.textContent = b.id;
+    }
+    function renderSwitcher(){
+      badgeSwitcher.innerHTML = '';
+      if(badges.length < 2) return;
+      badges.forEach((b, i)=>{
+        const chip = document.createElement('div');
+        chip.className = 'badge-chip' + (i===activeIndex ? ' active' : '');
+        chip.textContent = b.name || b.id;
+        chip.onclick = (e)=>{ e.stopPropagation(); activeIndex = i; setActiveIndex(i); renderQR(); renderSwitcher(); };
+        badgeSwitcher.appendChild(chip);
+      });
+    }
+    renderQR();
+    renderSwitcher();
+
+    const modalBg = document.getElementById('modalBg');
+    const nameInput = document.getElementById('nameInput');
+    const idInput = document.getElementById('idInput');
+    const savedList = document.getElementById('savedList');
+
+    function renderSavedList(){
+      savedList.innerHTML = badges.map((b,i)=>`
+        <div class="saved-item">
+          <div class="info"><div class="n">${escapeHtml(b.name||'พนักงาน')}</div><div class="i">${escapeHtml(b.id)}</div></div>
+          <div class="btns">
+            <button class="mini-btn" data-edit="${i}">✏️</button>
+            <button class="mini-btn danger" data-del="${i}">🗑️</button>
+          </div>
+        </div>`).join('');
+      savedList.querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.onclick = ()=>{
+          const i = parseInt(btn.dataset.edit,10);
+          nameInput.value = badges[i].name || '';
+          idInput.value = badges[i].id;
+          nameInput.dataset.editIndex = i;
+        };
+      });
+      savedList.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.onclick = ()=>{
+          const i = parseInt(btn.dataset.del,10);
+          if(badges.length===1){ toast('ต้องมีอย่างน้อย 1 บัตร'); return; }
+          if(!confirm('ลบบัตรนี้?')) return;
+          badges.splice(i,1);
+          saveBadges(badges);
+          activeIndex = 0; setActiveIndex(0);
+          renderQR(); renderSwitcher(); renderSavedList();
+        };
+      });
+    }
+    document.getElementById('settingsBtn').onclick = (e)=>{
+      e.stopPropagation();
+      renderSavedList();
+      nameInput.value=''; idInput.value=''; delete nameInput.dataset.editIndex;
+      modalBg.style.display='flex';
+    };
+    document.getElementById('closeSettings').onclick = (e)=>{ e.stopPropagation(); modalBg.style.display='none'; };
+    modalBg.onclick = (e)=>{ if(e.target===modalBg) modalBg.style.display='none'; };
+    document.getElementById('saveBadge').onclick = (e)=>{
+      e.stopPropagation();
+      const id = idInput.value.trim();
+      const name = nameInput.value.trim();
+      if(!id){ toast('กรุณาใส่รหัสพนักงาน'); return; }
+      const editIdx = nameInput.dataset.editIndex;
+      if(editIdx !== undefined && editIdx !== ''){ badges[parseInt(editIdx,10)] = { id, name }; }
+      else { badges.push({ id, name }); }
+      saveBadges(badges);
+      activeIndex = (editIdx !== undefined && editIdx !== '') ? parseInt(editIdx,10) : badges.length-1;
+      setActiveIndex(activeIndex);
+      renderQR(); renderSwitcher(); renderSavedList();
+      nameInput.value=''; idInput.value=''; delete nameInput.dataset.editIndex;
+      toast('บันทึกบัตรแล้ว');
+    };
+
+    // ===================== wake lock =====================
+    let wakeLock = null;
+    async function requestWakeLock(){
+      try{ if('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); } }catch(e){}
+    }
+    requestWakeLock();
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') requestWakeLock(); });
+
+    // ===================== schedule & calendar =====================
+    function loadSchedule(){
+      return Object.assign({
+        morningStart:'08:00', lunchStart:'12:00', afternoonStart:'13:00', afternoonEnd:'17:00',
+        workDays:[1,2,3,4,5,6] // 0=Sun..6=Sat, default Mon-Sat
+      }, JSON.parse(localStorage.getItem(LS_SCHEDULE) || '{}'));
+    }
+    function saveSchedule(s){ localStorage.setItem(LS_SCHEDULE, JSON.stringify(s)); }
+    let schedule = loadSchedule();
+
+    function loadOverrides(){ return JSON.parse(localStorage.getItem(LS_OVERRIDES) || '[]'); }
+    function saveOverrides(list){ localStorage.setItem(LS_OVERRIDES, JSON.stringify(list)); }
+    function upsertOverride(entry){
+      let list = loadOverrides();
+      list = list.filter(o => o.date !== entry.date);
+      list.push(entry);
+      saveOverrides(list);
+    }
+    function removeOverride(date){
+      saveOverrides(loadOverrides().filter(o => o.date !== date));
+    }
+    function getOverride(dateStr){ return loadOverrides().find(o => o.date === dateStr) || null; }
+
+    function isWorkDay(dateStr){
+      const ov = getOverride(dateStr);
+      if(ov && ov.kind === 'holiday') return false;
+      if(ov && ov.kind === 'workday') return true;
+      const dow = new Date(dateStr + 'T00:00:00').getDay();
+      return schedule.workDays.includes(dow);
+    }
+
+    // ===================== time helpers =====================
+    function dateKey(ts){
+      const d = new Date(ts);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    function timeStr(ts){ return new Date(ts).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}); }
+    function dayLabel(dateStr){
+      return new Date(dateStr+'T00:00:00').toLocaleDateString('th-TH', {weekday:'short', day:'numeric', month:'short'});
+    }
+    function hhmmToMinutes(hhmm){ const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
+    function formatDuration(mins){
+      mins = Math.round(mins);
+      if(mins <= 0) return '0 นาที';
+      const h = Math.floor(mins/60), m = mins%60;
+      if(h>0 && m>0) return `${h} ชม. ${m} นาที`;
+      if(h>0) return `${h} ชม.`;
+      return `${m} นาที`;
+    }
+
+    // ===================== attendance log =====================
+    function getLog(){ return JSON.parse(localStorage.getItem(LS_LOG) || '[]'); }
+    function saveLog(log){ localStorage.setItem(LS_LOG, JSON.stringify(log)); }
+    function entriesForDate(log, key){ return log.filter(e => dateKey(e.ts) === key).sort((a,b)=>a.ts-b.ts); }
+
+    function nextTypeForNow(now){
+      const todays = entriesForDate(getLog(), dateKey(now));
+      return todays.length % 2 === 0 ? 'เข้างาน' : 'เลิกงาน';
+    }
+
+    // returns minutes late, or null if not late / not applicable
+    function computeLateMinutes(entry, dayEntries){
+      if(entry.type !== 'เข้างาน') return null;
+      const inEntries = dayEntries.filter(e=>e.type==='เข้างาน');
+      const isFirst = inEntries.length && inEntries[0].ts === entry.ts;
+      const refStr = isFirst ? schedule.morningStart : schedule.afternoonStart;
+      const ref = hhmmToMinutes(refStr);
+      const d = new Date(entry.ts);
+      const actual = d.getHours()*60 + d.getMinutes();
+      const diff = actual - ref;
+      return diff > 0 ? diff : null;
+    }
+
+    const MIN_GAP_MS = 3000;
+    function logAttendance(){
+      const now = Date.now();
+      const log = getLog();
+      if(log.length){
+        const last = log[log.length-1];
+        if(now - last.ts < MIN_GAP_MS) return null;
+      }
+      const type = nextTypeForNow(now);
+      const entry = { id: badges[activeIndex].id, ts: now, type };
+      log.push(entry);
+      saveLog(log);
+      renderTodayPanel();
+      return entry;
+    }
+
+    const tapFlash = document.getElementById('tapFlash');
+    const confirmToast = document.getElementById('confirmToast');
+    const confirmType = document.getElementById('confirmType');
+    const confirmTime = document.getElementById('confirmTime');
+
+    function showConfirmFeedback(entry){
+      tapFlash.classList.add('show');
+      setTimeout(()=>tapFlash.classList.remove('show'), 150);
+      if(navigator.vibrate) navigator.vibrate(entry.type==='เข้างาน' ? [40] : [40,60,40]);
+      const dayEntries = entriesForDate(getLog(), dateKey(entry.ts));
+      const late = computeLateMinutes(entry, dayEntries);
+      confirmType.textContent = entry.type + (late ? ` (สาย ${formatDuration(late)})` : '');
+      confirmType.style.color = entry.type==='เข้างาน' ? (late ? 'var(--red)' : 'var(--accent)') : 'var(--amber)';
+      confirmTime.textContent = timeStr(entry.ts);
+      confirmToast.classList.add('show');
+      clearTimeout(showConfirmFeedback._t);
+      showConfirmFeedback._t = setTimeout(()=>confirmToast.classList.remove('show'), 2600);
+    }
+
+    function isInteractive(el){
+      return el.closest('button, .badge-chip, input, select, a, .modal-bg, .install-banner');
+    }
+    function anyModalOpen(){
+      return ['modalBg','scheduleModalBg','leaveModalBg','historyModalBg','bonusModalBg']
+        .some(id => document.getElementById(id).style.display === 'flex');
+    }
+    document.addEventListener('click', (e)=>{
+      if(anyModalOpen()) return;
+      if(isInteractive(e.target)) return;
+      const entry = logAttendance();
+      if(entry) showConfirmFeedback(entry);
+    });
+
+    // ===================== today panel =====================
+    const inList = document.getElementById('inList');
+    const outList = document.getElementById('outList');
+    const leaveArea = document.getElementById('leaveArea');
+
+    function renderTodayPanel(){
+      const todayKey = dateKey(Date.now());
+      const todays = entriesForDate(getLog(), todayKey);
+      const ins = todays.filter(e=>e.type==='เข้างาน');
+      const outs = todays.filter(e=>e.type==='เลิกงาน');
+
+      function rowHtml(e, cls){
+        const late = computeLateMinutes(e, todays);
+        const lateHtml = late ? `<span class="late-badge">สาย ${formatDuration(late)}</span>` : '';
+        return `<div class="time-row ${cls}">
+          <span class="dot"></span>
+          <span class="t">${timeStr(e.ts)}</span>
+          ${lateHtml}
+          <span class="spacer"></span>
+          <button class="del-btn" data-ts="${e.ts}" title="ลบ">🗑️</button>
+        </div>`;
+      }
+
+      inList.innerHTML = ins.length ? ins.map(e=>rowHtml(e,'in')).join('') : '<div class="empty-log">ยังไม่มีการบันทึกเข้างานวันนี้</div>';
+      outList.innerHTML = outs.length ? outs.map(e=>rowHtml(e,'out')).join('') : '<div class="empty-log">ยังไม่มีการบันทึกเลิกงานวันนี้</div>';
+
+      [inList, outList].forEach(list=>{
+        list.querySelectorAll('[data-ts]').forEach(btn=>{
+          btn.onclick = (ev)=>{
+            ev.stopPropagation();
+            const ts = parseFloat(btn.dataset.ts);
+            saveLog(getLog().filter(e => e.ts !== ts));
+            renderTodayPanel();
+          };
+        });
+      });
+
+      // leave area for today
+      const ov = getOverride(todayKey);
+      if(ov && ov.kind === 'leave'){
+        leaveArea.innerHTML = `<div class="leave-card">
+          <span><span class="lt">${LEAVE_LABELS[ov.leaveType]||'ลา'}</span> — ${formatDuration(ov.minutes||0)}</span>
+          <button id="editLeaveBtn">แก้ไข</button>
+        </div>`;
+        document.getElementById('editLeaveBtn').onclick = (e)=>{ e.stopPropagation(); openLeaveModal(todayKey); };
+      } else {
+        leaveArea.innerHTML = `<button class="leave-add-btn" id="addLeaveBtn">🏖️ บันทึกการลาวันนี้</button>`;
+        document.getElementById('addLeaveBtn').onclick = (e)=>{ e.stopPropagation(); openLeaveModal(todayKey); };
+      }
+    }
+    renderTodayPanel();
+
+    // ===================== leave modal =====================
+    const leaveModalBg = document.getElementById('leaveModalBg');
+    const leaveDateLabel = document.getElementById('leaveDateLabel');
+    const leaveHoursInput = document.getElementById('leaveHours');
+    const leaveMinutesInput = document.getElementById('leaveMinutes');
+    const leaveTypeChips = document.querySelectorAll('#leaveTypeChips .type-chip-btn');
+    let leaveModalDate = null;
+    let selectedLeaveType = 'vacation';
+
+    function openLeaveModal(dateStr){
+      leaveModalDate = dateStr;
+      const todayKey = dateKey(Date.now());
+      leaveDateLabel.textContent = dateStr === todayKey ? 'วันนี้' : dayLabel(dateStr);
+      const ov = getOverride(dateStr);
+      if(ov && ov.kind==='leave'){
+        selectedLeaveType = ov.leaveType;
+        leaveHoursInput.value = Math.floor((ov.minutes||0)/60);
+        leaveMinutesInput.value = (ov.minutes||0)%60;
+      } else {
+        selectedLeaveType = 'vacation';
+        leaveHoursInput.value = 8;
+        leaveMinutesInput.value = 0;
+      }
+      updateLeaveChipUI();
+      leaveModalBg.style.display='flex';
+    }
+    function updateLeaveChipUI(){
+      leaveTypeChips.forEach(btn=>{
+        btn.classList.toggle('sel', btn.dataset.type === selectedLeaveType);
+      });
+    }
+    leaveTypeChips.forEach(btn=>{
+      btn.onclick = (e)=>{ e.stopPropagation(); selectedLeaveType = btn.dataset.type; updateLeaveChipUI(); };
+    });
+    leaveModalBg.onclick = (e)=>{ if(e.target===leaveModalBg) leaveModalBg.style.display='none'; };
+
+    document.getElementById('saveLeaveBtn').onclick = (e)=>{
+      e.stopPropagation();
+      const h = Math.max(0, parseInt(leaveHoursInput.value||'0',10));
+      const m = Math.max(0, Math.min(59, parseInt(leaveMinutesInput.value||'0',10)));
+      upsertOverride({ date: leaveModalDate, kind:'leave', leaveType: selectedLeaveType, minutes: h*60+m });
+      leaveModalBg.style.display='none';
+      renderTodayPanel();
+      toast('บันทึกการลาแล้ว');
+    };
+    document.getElementById('removeLeaveBtn').onclick = (e)=>{
+      e.stopPropagation();
+      removeOverride(leaveModalDate);
+      leaveModalBg.style.display='none';
+      renderTodayPanel();
+      toast('ลบการลาแล้ว');
+    };
+
+    // ===================== work schedule modal =====================
+    const scheduleModalBg = document.getElementById('scheduleModalBg');
+    const fMorningStart = document.getElementById('fMorningStart');
+    const fLunchStart = document.getElementById('fLunchStart');
+    const fAfternoonStart = document.getElementById('fAfternoonStart');
+    const fAfternoonEnd = document.getElementById('fAfternoonEnd');
+    const dayCheckGrid = document.getElementById('dayCheckGrid');
+    const overrideList = document.getElementById('overrideList');
+
+    function renderDayCheckGrid(){
+      dayCheckGrid.innerHTML = '';
+      for(let dow=0; dow<7; dow++){
+        const el = document.createElement('div');
+        el.className = 'daycheck' + (schedule.workDays.includes(dow) ? ' on' : '');
+        el.textContent = DOW_LABELS[dow];
+        el.onclick = (e)=>{
+          e.stopPropagation();
+          const idx = schedule.workDays.indexOf(dow);
+          if(idx>=0) schedule.workDays.splice(idx,1); else schedule.workDays.push(dow);
+          renderDayCheckGrid();
+        };
+        dayCheckGrid.appendChild(el);
+      }
+    }
+
+    function renderOverrideList(){
+      const list = loadOverrides().sort((a,b)=> a.date < b.date ? -1 : 1);
+      if(!list.length){ overrideList.innerHTML = '<div class="empty-log">ยังไม่มีรายการ</div>'; return; }
+      overrideList.innerHTML = list.map(o=>{
+        const kindLabel = o.kind==='holiday' ? 'วันหยุด' : o.kind==='workday' ? 'ทำงานพิเศษ' : LEAVE_LABELS[o.leaveType]||'ลา';
+        return `<div class="override-item">
+          <span><span class="od">${dayLabel(o.date)}</span><span class="ok ${o.kind}">${kindLabel}</span>${escapeHtml(o.label||'')}</span>
+          <button class="mini-btn danger" data-ov="${o.date}">🗑️</button>
+        </div>`;
+      }).join('');
+      overrideList.querySelectorAll('[data-ov]').forEach(btn=>{
+        btn.onclick = (e)=>{
+          e.stopPropagation();
+          removeOverride(btn.dataset.ov);
+          renderOverrideList();
+        };
+      });
+    }
+
+    document.getElementById('scheduleBtn').onclick = (e)=>{
+      e.stopPropagation();
+      schedule = loadSchedule();
+      fMorningStart.value = schedule.morningStart;
+      fLunchStart.value = schedule.lunchStart;
+      fAfternoonStart.value = schedule.afternoonStart;
+      fAfternoonEnd.value = schedule.afternoonEnd;
+      renderDayCheckGrid();
+      renderOverrideList();
+      scheduleModalBg.style.display='flex';
+    };
+    document.getElementById('closeSchedule').onclick = (e)=>{ e.stopPropagation(); scheduleModalBg.style.display='none'; };
+    scheduleModalBg.onclick = (e)=>{ if(e.target===scheduleModalBg) scheduleModalBg.style.display='none'; };
+
+    document.getElementById('saveSchedule').onclick = (e)=>{
+      e.stopPropagation();
+      schedule.morningStart = fMorningStart.value || '08:00';
+      schedule.lunchStart = fLunchStart.value || '12:00';
+      schedule.afternoonStart = fAfternoonStart.value || '13:00';
+      schedule.afternoonEnd = fAfternoonEnd.value || '17:00';
+      saveSchedule(schedule);
+      scheduleModalBg.style.display='none';
+      renderTodayPanel();
+      toast('บันทึกตารางงานแล้ว');
+    };
+
+    document.getElementById('addOverrideBtn').onclick = (e)=>{
+      e.stopPropagation();
+      const date = document.getElementById('ovDate').value;
+      const kind = document.getElementById('ovType').value;
+      const label = document.getElementById('ovLabel').value.trim();
+      if(!date){ toast('กรุณาเลือกวันที่'); return; }
+      upsertOverride({ date, kind, label });
+      document.getElementById('ovDate').value='';
+      document.getElementById('ovLabel').value='';
+      renderOverrideList();
+      toast('เพิ่มรายการแล้ว');
+    };
+
+    // CSV import: expected columns date,type,label
+    document.getElementById('csvFileInput').addEventListener('change', function(e){
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try{
+          const text = ev.target.result;
+          const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+          let start = 0;
+          if(lines[0] && lines[0].toLowerCase().includes('date')) start = 1;
+          let count = 0;
+          for(let i=start;i<lines.length;i++){
+            const parts = lines[i].split(',').map(p=>p.trim());
+            const date = parts[0];
+            let kind = (parts[1]||'holiday').toLowerCase();
+            const label = parts[2] || '';
+            if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+            if(['vacation','personal','sick'].includes(kind)){
+              upsertOverride({ date, kind:'leave', leaveType: kind, minutes: 480, label });
+            } else {
+              kind = kind === 'workday' ? 'workday' : 'holiday';
+              upsertOverride({ date, kind, label });
+            }
+            count++;
+          }
+          renderOverrideList();
+          toast(`นำเข้าสำเร็จ ${count} รายการ`);
+        }catch(err){
+          toast('ไฟล์ CSV ไม่ถูกต้อง');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+
+    // ===================== monthly summary =====================
+    const historyModalBg = document.getElementById('historyModalBg');
+    const monthLabel = document.getElementById('monthLabel');
+    const monthDayList = document.getElementById('monthDayList');
+    const sumDays = document.getElementById('sumDays');
+    const sumHours = document.getElementById('sumHours');
+    const sumLeave = document.getElementById('sumLeave');
+    const sumLate = document.getElementById('sumLate');
+
+    let viewMonth = new Date(); viewMonth.setDate(1);
+
+    function pairsAndHours(dayEntries){
+      let hours = 0;
+      for(let i=0;i<dayEntries.length;i+=2){
+        const inE = dayEntries[i], outE = dayEntries[i+1];
+        if(inE && outE){ hours += (outE.ts - inE.ts) / 3600000; }
+      }
+      return hours;
+    }
+
+    function renderMonth(){
+      const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+      monthLabel.textContent = viewMonth.toLocaleDateString('th-TH', {month:'long', year:'numeric'});
+
+      const log = getLog();
+      const inMonth = log.filter(e=>{ const d=new Date(e.ts); return d.getFullYear()===y && d.getMonth()===m; });
+      const byDate = {};
+      inMonth.forEach(e=>{ const k=dateKey(e.ts); (byDate[k]=byDate[k]||[]).push(e); });
+
+      const overridesInMonth = loadOverrides().filter(o=>{
+        const d = new Date(o.date+'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m;
+      });
+      overridesInMonth.forEach(o=>{ if(!byDate[o.date]) byDate[o.date] = []; });
+
+      const dateKeys = Object.keys(byDate).sort();
+
+      let totalHours = 0, totalLeaveMin = 0, lateDays = 0;
+      dateKeys.forEach(k=>{
+        const dayEntries = byDate[k].sort((a,b)=>a.ts-b.ts);
+        totalHours += pairsAndHours(dayEntries);
+        const ov = getOverride(k);
+        if(ov && ov.kind==='leave') totalLeaveMin += (ov.minutes||0);
+        const firstIn = dayEntries.find(e=>e.type==='เข้างาน');
+        if(firstIn && computeLateMinutes(firstIn, dayEntries)) lateDays++;
+      });
+
+      sumDays.textContent = dateKeys.filter(k=>byDate[k].some(e=>e.type==='เข้างาน')).length;
+      sumHours.textContent = totalHours.toFixed(1);
+      sumLeave.textContent = (totalLeaveMin/60).toFixed(1);
+      sumLate.textContent = lateDays;
+
+      if(!dateKeys.length){
+        monthDayList.innerHTML = '<div class="empty-log">ไม่มีข้อมูลในเดือนนี้</div>';
+        return;
+      }
+
+      monthDayList.innerHTML = dateKeys.slice().reverse().map(k=>{
+        const dayEntries = byDate[k].sort((a,b)=>a.ts-b.ts);
+        const ov = getOverride(k);
+        let rows = '';
+        dayEntries.forEach(en=>{
+          const late = computeLateMinutes(en, dayEntries);
+          const lateHtml = late ? ` <span class="late-badge">สาย ${formatDuration(late)}</span>` : '';
+          const cls = en.type==='เข้างาน' ? 'in' : 'out';
+          rows += `<div class="drow ${cls}"><span class="dot"></span><span class="lbl">${en.type}</span><span class="t">${timeStr(en.ts)}</span>${lateHtml}</div>`;
+        });
+        let extra = '';
+        if(ov && ov.kind==='holiday') extra += `<div class="holiday-line">🔴 วันหยุด${ov.label ? ': '+escapeHtml(ov.label) : ''}</div>`;
+        if(ov && ov.kind==='workday') extra += `<div class="leave-line">🟢 วันทำงานพิเศษ${ov.label ? ': '+escapeHtml(ov.label) : ''}</div>`;
+        if(ov && ov.kind==='leave') extra += `<div class="leave-line">🏖️ ${LEAVE_LABELS[ov.leaveType]} — ${formatDuration(ov.minutes||0)}</div>`;
+        if(!rows && !extra) rows = '<div class="empty-log" style="padding:4px 0;">ไม่มีการบันทึก</div>';
+        return `<div class="day-block"><div class="dd">${dayLabel(k)}</div>${rows}${extra}</div>`;
+      }).join('');
+    }
+
+    document.getElementById('historyBtn').onclick = (e)=>{
+      e.stopPropagation();
+      viewMonth = new Date(); viewMonth.setDate(1);
+      renderMonth();
+      historyModalBg.style.display='flex';
+    };
+    document.getElementById('closeHistory').onclick = (e)=>{ e.stopPropagation(); historyModalBg.style.display='none'; };
+    historyModalBg.onclick = (e)=>{ if(e.target===historyModalBg) historyModalBg.style.display='none'; };
+    document.getElementById('prevMonthBtn').onclick = (e)=>{ e.stopPropagation(); viewMonth.setMonth(viewMonth.getMonth()-1); renderMonth(); };
+    document.getElementById('nextMonthBtn').onclick = (e)=>{ e.stopPropagation(); viewMonth.setMonth(viewMonth.getMonth()+1); renderMonth(); };
+
+    document.getElementById('exportMonthBtn').onclick = (e)=>{
+      e.stopPropagation();
+      const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+      const log = getLog().filter(en=>{ const d=new Date(en.ts); return d.getFullYear()===y && d.getMonth()===m; }).sort((a,b)=>a.ts-b.ts);
+      const overridesInMonth = loadOverrides().filter(o=>{ const d=new Date(o.date+'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m; });
+      if(!log.length && !overridesInMonth.length){ toast('ไม่มีข้อมูลให้ส่งออกในเดือนนี้'); return; }
+
+      const byDateForLate = {};
+      log.forEach(e=>{ const k=dateKey(e.ts); (byDateForLate[k]=byDateForLate[k]||[]).push(e); });
+
+      const rows = [['employee_id','date','time','type','late_minutes','note']];
+      log.forEach(en=>{
+        const dayEntries = byDateForLate[dateKey(en.ts)].sort((a,b)=>a.ts-b.ts);
+        const late = computeLateMinutes(en, dayEntries) || 0;
+        rows.push([en.id, dateKey(en.ts), timeStr(en.ts), en.type, late, '']);
+      });
+      overridesInMonth.forEach(o=>{
+        const note = o.kind==='leave' ? `${LEAVE_LABELS[o.leaveType]} ${((o.minutes||0)/60).toFixed(1)}h` : (o.label||'');
+        rows.push(['', o.date, '', o.kind, '', note]);
+      });
+      const csv = rows.map(r=>r.join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'attendance_' + y + '-' + String(m+1).padStart(2,'0') + '.csv';
+      a.click();
+    };
+
+    // ===================== leave quotas & bonus dashboard =====================
+    const LS_LEAVE_SETTINGS = 'leave_settings_v1';
+    function loadLeaveSettings(){
+      return Object.assign({ vacationQuota:6, personalQuota:3, sickQuota:30, monthlySalary:0 },
+        JSON.parse(localStorage.getItem(LS_LEAVE_SETTINGS) || '{}'));
+    }
+    function saveLeaveSettings(s){ localStorage.setItem(LS_LEAVE_SETTINGS, JSON.stringify(s)); }
+    let leaveSettings = loadLeaveSettings();
+
+    function standardWorkMinutes(){
+      const s = loadSchedule();
+      return (hhmmToMinutes(s.lunchStart) - hhmmToMinutes(s.morningStart)) +
+             (hhmmToMinutes(s.afternoonEnd) - hhmmToMinutes(s.afternoonStart));
+    }
+
+    function usedLeaveDaysForYear(year){
+      const perMin = standardWorkMinutes() || 480;
+      const totals = { vacation:0, personal:0, sick:0 };
+      loadOverrides().forEach(o=>{
+        if(o.kind !== 'leave') return;
+        const y = new Date(o.date+'T00:00:00').getFullYear();
+        if(y !== year) return;
+        totals[o.leaveType] = (totals[o.leaveType]||0) + ((o.minutes||0) / perMin);
+      });
+      return totals;
+    }
+
+    function bonusTierFor(combinedDays){
+      if(combinedDays <= 5) return { multiplier:35, label:'≤ 5 วัน (กิจ+ป่วย)' };
+      if(combinedDays <= 8) return { multiplier:30, label:'≤ 8 วัน (กิจ+ป่วย)' };
+      if(combinedDays <= 10) return { multiplier:25, label:'≤ 10 วัน (กิจ+ป่วย)' };
+      return { multiplier:10, label:'มากกว่า 10 วัน (กิจ+ป่วย)' };
+    }
+
+    const bonusModalBg = document.getElementById('bonusModalBg');
+    const qVacation = document.getElementById('qVacation');
+    const qPersonal = document.getElementById('qPersonal');
+    const qSick = document.getElementById('qSick');
+    const qMonthlySalary = document.getElementById('qMonthlySalary');
+    const dailyWagePreview = document.getElementById('dailyWagePreview');
+    const yearLabel = document.getElementById('yearLabel');
+    const usedVacation = document.getElementById('usedVacation');
+    const usedPersonal = document.getElementById('usedPersonal');
+    const usedSick = document.getElementById('usedSick');
+    const usedCombined = document.getElementById('usedCombined');
+    const bonusTierText = document.getElementById('bonusTierText');
+    const bonusAmountText = document.getElementById('bonusAmountText');
+
+    let viewYear = new Date().getFullYear();
+
+    function fmtDays(n){ return (Math.round(n*10)/10).toString(); }
+
+    function renderBonusDashboard(){
+      yearLabel.textContent = 'ปี ' + (viewYear + 543); // แสดงเป็น พ.ศ.
+      const used = usedLeaveDaysForYear(viewYear);
+
+      usedVacation.textContent = fmtDays(used.vacation) + '/' + leaveSettings.vacationQuota;
+      usedPersonal.textContent = fmtDays(used.personal) + '/' + leaveSettings.personalQuota;
+      usedSick.textContent = fmtDays(used.sick) + '/' + leaveSettings.sickQuota;
+
+      const combined = (used.personal||0) + (used.sick||0);
+      usedCombined.textContent = fmtDays(combined);
+
+      const tier = bonusTierFor(combined);
+      const dailyWage = leaveSettings.monthlySalary / 30;
+      const amount = dailyWage * tier.multiplier;
+      bonusTierText.textContent = `เกณฑ์: ${tier.label} → ค่าแรงต่อวัน (${dailyWage.toLocaleString('th-TH',{maximumFractionDigits:2})} บาท) × ${tier.multiplier}`;
+      bonusAmountText.textContent = leaveSettings.monthlySalary > 0
+        ? amount.toLocaleString('th-TH', {maximumFractionDigits:2}) + ' บาท'
+        : 'กรุณาตั้งค่าเงินเดือนก่อน';
+
+      // visual warning color if any quota exceeded
+      [[usedVacation, used.vacation, leaveSettings.vacationQuota],
+       [usedPersonal, used.personal, leaveSettings.personalQuota],
+       [usedSick, used.sick, leaveSettings.sickQuota]].forEach(([el, u, q])=>{
+        el.style.color = u > q ? 'var(--red)' : 'var(--text)';
+      });
+    }
+
+    document.getElementById('bonusBtn').onclick = (e)=>{
+      e.stopPropagation();
+      leaveSettings = loadLeaveSettings();
+      qVacation.value = leaveSettings.vacationQuota;
+      qPersonal.value = leaveSettings.personalQuota;
+      qSick.value = leaveSettings.sickQuota;
+      qMonthlySalary.value = leaveSettings.monthlySalary;
+      updateDailyWagePreview();
+      viewYear = new Date().getFullYear();
+      renderBonusDashboard();
+      bonusModalBg.style.display='flex';
+    };
+    function updateDailyWagePreview(){
+      const salary = parseFloat(qMonthlySalary.value || '0');
+      const daily = salary / 30;
+      dailyWagePreview.textContent = `= ค่าแรงต่อวัน ${daily.toLocaleString('th-TH',{maximumFractionDigits:2})} บาท (เงินเดือน ÷ 30)`;
+    }
+    qMonthlySalary.addEventListener('input', updateDailyWagePreview);
+    document.getElementById('closeBonus').onclick = (e)=>{ e.stopPropagation(); bonusModalBg.style.display='none'; };
+    bonusModalBg.onclick = (e)=>{ if(e.target===bonusModalBg) bonusModalBg.style.display='none'; };
+
+    document.getElementById('saveLeaveSettings').onclick = (e)=>{
+      e.stopPropagation();
+      leaveSettings = {
+        vacationQuota: Math.max(0, parseFloat(qVacation.value||'0')),
+        personalQuota: Math.max(0, parseFloat(qPersonal.value||'0')),
+        sickQuota: Math.max(0, parseFloat(qSick.value||'0')),
+        monthlySalary: Math.max(0, parseFloat(qMonthlySalary.value||'0'))
+      };
+      saveLeaveSettings(leaveSettings);
+      updateDailyWagePreview();
+      renderBonusDashboard();
+      toast('บันทึกโควตาแล้ว');
+    };
+
+    document.getElementById('prevYearBtn').onclick = (e)=>{ e.stopPropagation(); viewYear--; renderBonusDashboard(); };
+    document.getElementById('nextYearBtn').onclick = (e)=>{ e.stopPropagation(); viewYear++; renderBonusDashboard(); };
+
+    // ===================== PWA install prompt =====================
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('installBanner');
+    window.addEventListener('beforeinstallprompt', (e)=>{
+      e.preventDefault();
+      deferredPrompt = e;
+      installBanner.classList.add('show');
+    });
+    document.getElementById('installBtn').onclick = (e)=>{
+      e.stopPropagation();
+      installBanner.classList.remove('show');
+      if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{}); deferredPrompt=null; }
+    };
+    window.addEventListener('appinstalled', ()=>{ installBanner.classList.remove('show'); });
+
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('sw.js').catch(()=>{});
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
